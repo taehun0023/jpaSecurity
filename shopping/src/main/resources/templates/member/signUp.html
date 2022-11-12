@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html
+xmlns="http://www.w3.org/1999/xhtml"
+xmlns:th="http//www.thymeleaf.org"
+xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+layout:decorate="~{layouts/layout}"
+>
+<head>
+	<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>		
+    <meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+	<!-- index.html 고유 CSS 추가 -->
+	<link rel="stylesheet" href="/css/member/join.css">
+    <!--    <link rel="stylesheet" th:href="@{/css/page/home.css}" >-->
+<!-- index.html 고유 스크립트 추가 -->
+
+</head>
+<body>
+<th:block layout:fragment="content">
+<div class="join_container" id="join_container">
+	<div class="form-container sign-up-container">
+		<form id="join_form" class="join_form">
+			<h1>Create Account</h1>
+			<div class="social-container">
+				<a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
+				<a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+				<a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+			</div>
+			<span>or use your email for registration</span>
+			<input class="join_input" type="text" id="memberId" name="memberId" placeholder="ID" />
+			<input class="join_input" type="email" id="memberEmail" name="memberEmail" placeholder="Email" />
+			<input class="join_input" type="password" id="memberPw1" name="memberPw" placeholder="Password" />
+			<input class="join_input" type="password" id="memberPw2" placeholder="Password Check" />
+			<button type="button" class="ghost-sign-up" onclick="SignUp();">Sign Up</button>
+		</form>
+	</div>
+	<div class="form-container sign-in-container">
+		<form action="/login/action" method="post">
+			<h1>Sign in</h1>
+			<div class="social-container">
+				<a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
+				<a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+				<a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+			</div>
+			<span>or use your account</span>
+			<input class="join_input" type="email" name="member" placeholder="Email" />
+			<input class="join_input" type="password" placeholder="Password" />
+			<input type="checkbox" name="remember-me">
+			<label for="remember-me">자동 로그인</label>
+			<a href="#">Forgot your password?</a>
+			<button type="button" class="join_btn">Sign In</button>
+		</form>
+	</div>
+	<div class="overlay-container">
+		<div class="overlay">
+			<div class="overlay-panel overlay-left">
+				<h1>Welcome Back!</h1>
+				<p>To keep connected with us please login with your personal info</p>
+				<button class="ghost" id="signIn">Sign In</button>
+			</div>
+			<div class="overlay-panel overlay-right">
+				<h1>Hello, Friend!</h1>
+				<p>Enter your personal details and start journey with us</p>
+				<button class="ghost" id="signUp">Sign Up</button>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+var idCheckResult = true;
+var emailCheckResult = true;
+
+
+$(function(){
+	var token = $("meta[name='_csrf']").attr("content");
+ 	var header = $("meta[name='_csrf_header']").attr("content");	
+	
+	const signUpButton = document.getElementById('signUp');
+	const signInButton = document.getElementById('signIn');
+	const container = document.getElementById('join_container');
+
+	signUpButton.addEventListener('click', () => {
+		container.classList.add("right-panel-active");
+	});
+
+	signInButton.addEventListener('click', () => {
+		container.classList.remove("right-panel-active");
+	});
+	
+	$("#memberId").keyup(function(){
+		let idCheck = $("#memberId").val();
+		
+		$.ajax({
+			url : "/member/idCheck",
+			type : "post",
+			data : {"idCheck" : idCheck},
+	      	dataType: "text",
+	      	beforeSend : function(xhr){
+	    		xhr.setRequestHeader(header, token);
+	    	},
+			success : function(data) {
+				if (data == true) {
+					$("#memberId").css("border", "3px solid red");
+					idCheckResult = data;
+				} else {
+					$("#memberId").css("border", "none");
+					idCheckResult = data;
+				}
+			},
+			error: function(xhr, error, msg) {
+				console.log(xhr);
+				console.log(error);
+				console.log(msg);
+		   }
+			
+		});
+	});
+	
+	$("#memberEmail").keyup(function() {
+		let emailCheck = $("#memberEmail").val();
+		console.log(emailCheck);
+		$.ajax({
+			beforeSend: function(xhr){
+	            xhr.setRequestHeader(header,token);
+	        },
+			url : "/member/emailCheck",
+			type : "get",
+			data : {"emailCheck" : emailCheck},
+			success : function(data) {
+				if (data == true) {
+					$("#memberEmail").css("border", "3px solid red");
+					emailCheckResult = data;
+				} else {
+					$("#memberEmail").css("border", "none");
+					emailCheckResult = data;
+				}
+			},
+			error: function(xhr, error, msg) {
+				console.log(xhr),
+				console.log(error),
+				console.log(msg)
+			}
+		});
+	});
+}); // $(function())
+
+	
+function isValid() {
+	
+	const regExp = /\s/g;
+	const exptext = /^([0-9a-zA-Z_\.-]+)@([0-9a-zA-Z_-]+)(\.[0-9a-zA-Z_-]+){1,2}$/;
+	
+	const form = document.getElementById('join_form');
+	const memberId = form.memberId.value;
+	const memberEmail = form.memberEmail.value;
+	const memberPw1 = document.getElementById('memberPw1');
+	const memberPw2 = document.getElementById('memberPw2');
+	
+	if (memberId == "" || regExp.test(memberId)) {
+		alert("ID를 입력해 주세요.\n공백은 제거해 주세요.");
+		form.memberId.focus();
+		return false;
+	} else if (memberId.length < 5 || memberId.length > 12) {
+		alert("ID는 5~12글자 사이로 입력해주세요.");
+		form.memberId.focus();
+		return false;
+	} else if (idCheckResult == true) {
+		alert("중복된 ID입니다. 확인 해주세요.");
+		return false;
+	}
+	
+	if (memberEmail == "" || regExp.test(memberEmail)) {
+		alert("email를 입력해 주세요.");
+		form.memberEmail.focus();
+		return false;
+	} else if (!exptext.test(memberEmail)) {
+		alert("email형식에 맞춰 주세요.\n ex) abc123@gmail.com");
+		form.memberEmail.focus();
+		return false;
+	} else if (emailCheckResult == true) {
+		alert("중복된 email입니다. 확인 해주세요.");
+		form.memberEmail.focus();
+		return false;
+	}
+	
+	if (memberPw1.value == "" || regExp.test(memberPw1.value)) {
+		alert("비밀번호를 입력 혹은 공백을 제거해 주세요.");
+		form.memberPw1.focus();
+		return false;
+	}
+	
+	if (memberPw2.value == "" || regExp.test(memberPw2.value)) {
+		alert("비밀번호 체크부분을 입력 혹은 공백을 제거해 주세요.");
+		form.memberPw2.focus();
+		return false;
+	}
+	
+	if (memberPw1.value != memberPw2.value) {
+		alert("비밀번호와 비밀번호 체크 부분을 일치시켜 주세요.");
+		form.memberPw1.focus();
+		return false;
+	}
+	
+	return true;
+}
+	
+function SignUp() {
+	
+	/* if (!isValid()) {
+		return true;
+	} */
+	
+	var formData = $("#join_form")[0];
+	var parmas = {
+			role : "user",
+			memberId : formData.memberId.value,
+			memberPw : formData.memberPw.value,
+			memberEmail : formData.memberEmail.value
+	}
+	
+	$.ajax({
+		url : "/member/signUp",
+		type : "POST",
+		data : JSON.stringify(parmas),
+		contentType: "application/json",
+		processData: false,
+		success : function(data) {
+			alert(data + "번째 회원이 되신걸 축하합니다.");
+			location.href="/";
+		}, 
+		error: function(xhr, error, msg) {
+			console.log(xhr);
+			console.log(error);
+			console.log(msg);
+	   } 
+	});
+	
+}
+</script>
+</th:block>
+</body>
+</html>
